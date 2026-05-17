@@ -691,6 +691,7 @@
       <button class="filter-btn" onclick="setFiltro('pendente', this)">Pendentes</button>
       <button class="filter-btn" onclick="setFiltro('concluido', this)">Concluídos</button>
       <button class="filter-btn" onclick="setFiltro('cancelado', this)">Cancelados</button>
+      <button class="filter-btn" onclick="setFiltro('vencido', this)">⚠️ Vencidos</button>
     </div>
     <div id="listaCards"></div>
   </section>
@@ -851,8 +852,14 @@ function setFiltro(f, btn) {
 
 function renderLista() {
   const el = document.getElementById('listaCards');
+  const hoje = new Date().toISOString().split('T')[0];
   let lista = [...agendamentos].sort((a,b) => new Date(a.data) - new Date(b.data));
-  if (filtroAtual !== 'todos') lista = lista.filter(a => a.status === filtroAtual);
+
+  if (filtroAtual === 'vencido') {
+    lista = lista.filter(a => a.status === 'pendente' && a.data < hoje);
+  } else if (filtroAtual !== 'todos') {
+    lista = lista.filter(a => a.status === filtroAtual);
+  }
 
   if (!lista.length) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏍️</div><p>Nenhum agendamento ${filtroAtual !== 'todos' ? filtroAtual : ''}</p></div>`;
@@ -862,14 +869,20 @@ function renderLista() {
   el.innerHTML = lista.map(ag => {
     const dataFmt = formatData(ag.data);
     const valor = ag.valor ? 'R$ ' + parseFloat(ag.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '–';
+    const isVencido = ag.status === 'pendente' && ag.data < hoje;
+    const diasAtraso = isVencido ? Math.floor((new Date() - new Date(ag.data + 'T00:00:00')) / (1000*60*60*24)) : 0;
+    const badgeLabel = isVencido ? `⚠️ ${diasAtraso}d atraso` : ag.status === 'pendente' ? 'Pendente' : ag.status === 'concluido' ? 'Concluído' : 'Cancelado';
+    const badgeCls = isVencido ? 'badge' : `badge badge-${ag.status}`;
+    const badgeStyle = isVencido ? 'background:#2a0808;color:#e74c3c;border:1px solid #e74c3c44;' : '';
     return `
-    <div class="card status-${ag.status}">
+    <div class="card status-${ag.status}" style="${isVencido ? 'border-color:#e74c3c44;' : ''}">
+      ${isVencido ? '<div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#e74c3c;border-radius:4px 0 0 4px;"></div>' : ''}
       <div class="card-top">
         <div>
           <div class="card-name">${ag.nome}</div>
           <div class="card-moto">🏍️ ${ag.moto}${ag.ano ? ' • ' + ag.ano : ''}</div>
         </div>
-        <span class="badge badge-${ag.status}">${ag.status === 'pendente' ? 'Pendente' : ag.status === 'concluido' ? 'Concluído' : 'Cancelado'}</span>
+        <span class="${badgeCls}" style="${badgeStyle}">${badgeLabel}</span>
       </div>
       <div class="card-service">🔧 ${ag.servico}</div>
       <div class="card-info">
@@ -882,7 +895,7 @@ function renderLista() {
       <div class="card-actions">
         <button class="act-btn whatsapp" onclick="enviarOrcamento('${ag.id}')">📋 Orçamento</button>
         ${ag.status === 'concluido' ? `<button class="act-btn whatsapp" onclick="enviarRecibo('${ag.id}')">🧾 Recibo</button>` : ''}
-        <button class="act-btn whatsapp" onclick="enviarWpp('${ag.id}')">💬 WPP</button>
+        ${isVencido ? `<button class="act-btn whatsapp" onclick="enviarReagendamento('${ag.id}')">💬 Oferta WPP</button>` : `<button class="act-btn whatsapp" onclick="enviarWpp('${ag.id}')">💬 WPP</button>`}
         ${ag.status === 'pendente' ? `<button class="act-btn concluir" onclick="mudarStatus('${ag.id}','concluido')">✔ Concluir</button>` : ''}
         ${ag.status === 'pendente' ? `<button class="act-btn cancelar" onclick="mudarStatus('${ag.id}','cancelado')">✕ Cancelar</button>` : ''}
         <button class="act-btn excluir" onclick="excluir('${ag.id}')">🗑</button>
@@ -941,13 +954,16 @@ function enviarReagendamento(id) {
   const tel = ag.telefone.replace(/\D/g,'');
   const msg =
     `Olá ${ag.nome}! 👋\n\n` +
-    `Notamos que você não compareceu na data agendada.\n\n` +
-    `📅 *Data marcada:* ${formatData(ag.data)}\n` +
-    `🔧 *Serviço:* ${ag.servico}\n` +
-    `🏍️ *Moto:* ${ag.moto}\n\n` +
-    `Gostaríamos de *reagendar* para um novo horário! 😊\n` +
-    `Entre em contato para escolher uma nova data.\n\n` +
-    `*Garage Motos Pinturas* 🏍️🔴`;
+    `Tudo bem? Aqui é da *Garage Motos Pinturas*! 🏍️🔥\n\n` +
+    `Notamos que você ainda não trouxe sua *${ag.moto}* para o serviço de *${ag.servico}*.\n\n` +
+    `Sua moto merece uma nova vida! Uma pintura nova transforma tudo — ` +
+    `valoriza a moto, chama atenção e dá aquela sensação de moto zero! ✨\n\n` +
+    `🎁 *OFERTA ESPECIAL ESTA SEMANA:*\n` +
+    `Reagende agora e garanta *10% de desconto* no seu serviço!\n` +
+    `⏳ Válido somente até domingo.\n\n` +
+    `É só responder essa mensagem para garantir sua vaga! 🔥\n\n` +
+    `Te esperamos! 💪\n` +
+    `*Garage Motos Pinturas*`;
   window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
