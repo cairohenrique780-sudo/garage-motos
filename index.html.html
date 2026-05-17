@@ -605,6 +605,9 @@
   <div class="tab" onclick="goTab('lembretes')">
     <span class="tab-icon">🔔</span>Alertas
   </div>
+  <div class="tab" onclick="goTab('vencidos')">
+    <span class="tab-icon">⚠️</span>Vencidos
+  </div>
   <div class="tab" onclick="goTab('calendario')">
     <span class="tab-icon">🗓️</span>Calendário
   </div>
@@ -702,6 +705,16 @@
     <div id="lembretesCards"></div>
   </section>
 
+  <!-- ABA: VENCIDOS -->
+  <section id="vencidos">
+    <div class="sec-title">Vencidos</div>
+    <div class="wpp-info" style="background:#2a0808;border-color:#e74c3c33;">
+      <strong style="color:#e74c3c;">⚠️ Atenção:</strong><br>
+      Clientes que tinham agendamento pendente e não trouxeram a moto na data marcada. Entre em contato para reagendar!
+    </div>
+    <div id="vencidosCards"></div>
+  </section>
+
   <!-- ABA: CALENDÁRIO -->
   <section id="calendario">
     <div class="sec-title">Calendário</div>
@@ -762,7 +775,9 @@ function salvar() {
 
 function atualizarHeader() {
   const p = agendamentos.filter(a => a.status === 'pendente').length;
-  document.getElementById('totalCount').textContent = p + ' AGEND.';
+  const hoje = new Date().toISOString().split('T')[0];
+  const v = agendamentos.filter(a => a.status === 'pendente' && a.data < hoje).length;
+  document.getElementById('totalCount').textContent = p + ' AGEND.' + (v > 0 ? ' • ⚠️' + v : '');
 }
 
 function toast(msg, dur = 2800) {
@@ -776,10 +791,11 @@ function goTab(id) {
   document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  const idx = ['agendar','lista','lembretes','calendario','stats'].indexOf(id);
+  const idx = ['agendar','lista','lembretes','vencidos','calendario','stats'].indexOf(id);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   if (id === 'lista') renderLista();
   if (id === 'lembretes') renderLembretes();
+  if (id === 'vencidos') renderVencidos();
   if (id === 'calendario') renderCalendario();
   if (id === 'stats') renderStats();
 }
@@ -873,6 +889,66 @@ function renderLista() {
       </div>
     </div>`;
   }).join('');
+}
+
+function renderVencidos() {
+  const el = document.getElementById('vencidosCards');
+  const hoje = new Date().toISOString().split('T')[0];
+  const lista = agendamentos
+    .filter(a => a.status === 'pendente' && a.data < hoje)
+    .sort((a,b) => new Date(a.data) - new Date(b.data));
+
+  if (!lista.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>Nenhum agendamento vencido!</p></div>`;
+    return;
+  }
+
+  el.innerHTML = lista.map(ag => {
+    const hoje = new Date();
+    const dataAg = new Date(ag.data + 'T00:00:00');
+    const diasAtraso = Math.floor((hoje - dataAg) / (1000*60*60*24));
+    const valor = ag.valor ? 'R$ ' + parseFloat(ag.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '–';
+    return `
+    <div class="card" style="border-color:#e74c3c44;">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#e74c3c;border-radius:4px 0 0 4px;"></div>
+      <div class="card-top">
+        <div>
+          <div class="card-name">${ag.nome}</div>
+          <div class="card-moto">🏍️ ${ag.moto}${ag.ano ? ' • ' + ag.ano : ''}</div>
+        </div>
+        <span class="badge" style="background:#2a0808;color:#e74c3c;border:1px solid #e74c3c44;">⚠️ ${diasAtraso}d atraso</span>
+      </div>
+      <div class="card-service">🔧 ${ag.servico}</div>
+      <div class="card-info">
+        <div class="info-item">📅 <strong>Era: ${formatData(ag.data)}</strong></div>
+        <div class="info-item">💰 <strong>${valor}</strong></div>
+        <div class="info-item">📱 <strong>${ag.telefone}</strong></div>
+      </div>
+      ${ag.obs ? `<div class="card-obs">📝 ${ag.obs}</div>` : ''}
+      <div class="card-actions">
+        <button class="act-btn whatsapp" onclick="enviarReagendamento('${ag.id}')">💬 Reagendar WPP</button>
+        <button class="act-btn concluir" onclick="mudarStatus('${ag.id}','concluido')">✔ Concluir</button>
+        <button class="act-btn cancelar" onclick="mudarStatus('${ag.id}','cancelado')">✕ Cancelar</button>
+        <button class="act-btn excluir" onclick="excluir('${ag.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function enviarReagendamento(id) {
+  const ag = agendamentos.find(a => a.id == id);
+  if (!ag) return;
+  const tel = ag.telefone.replace(/\D/g,'');
+  const msg =
+    `Olá ${ag.nome}! 👋\n\n` +
+    `Notamos que você não compareceu na data agendada.\n\n` +
+    `📅 *Data marcada:* ${formatData(ag.data)}\n` +
+    `🔧 *Serviço:* ${ag.servico}\n` +
+    `🏍️ *Moto:* ${ag.moto}\n\n` +
+    `Gostaríamos de *reagendar* para um novo horário! 😊\n` +
+    `Entre em contato para escolher uma nova data.\n\n` +
+    `*Garage Motos Pinturas* 🏍️🔴`;
+  window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function renderLembretes() {
