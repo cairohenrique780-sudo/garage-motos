@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -607,9 +608,6 @@
   <div class="tab" onclick="goTab('lembretes')">
     <span class="tab-icon">🔔</span>Alertas
   </div>
-  <div class="tab" onclick="goTab('vencidos')">
-    <span class="tab-icon">⚠️</span>Vencidos
-  </div>
   <div class="tab" onclick="goTab('calendario')">
     <span class="tab-icon">🗓️</span>Calendário
   </div>
@@ -794,7 +792,7 @@ function goTab(id) {
   document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  const idx = ['agendar','lista','lembretes','vencidos','calendario','stats'].indexOf(id);
+  const idx = ['agendar','lista','lembretes','calendario','stats'].indexOf(id);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   if (id === 'lista') renderLista();
   if (id === 'lembretes') renderLembretes();
