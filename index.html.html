@@ -691,7 +691,6 @@
       <button class="filter-btn" onclick="setFiltro('pendente', this)">Pendentes</button>
       <button class="filter-btn" onclick="setFiltro('concluido', this)">Concluídos</button>
       <button class="filter-btn" onclick="setFiltro('cancelado', this)">Cancelados</button>
-      <button class="filter-btn" onclick="setFiltro('vencido', this)">⚠️ Vencidos</button>
     </div>
     <div id="listaCards"></div>
   </section>
@@ -852,14 +851,8 @@ function setFiltro(f, btn) {
 
 function renderLista() {
   const el = document.getElementById('listaCards');
-  const hoje = new Date().toISOString().split('T')[0];
   let lista = [...agendamentos].sort((a,b) => new Date(a.data) - new Date(b.data));
-
-  if (filtroAtual === 'vencido') {
-    lista = lista.filter(a => a.status === 'pendente' && a.data < hoje);
-  } else if (filtroAtual !== 'todos') {
-    lista = lista.filter(a => a.status === filtroAtual);
-  }
+  if (filtroAtual !== 'todos') lista = lista.filter(a => a.status === filtroAtual);
 
   if (!lista.length) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏍️</div><p>Nenhum agendamento ${filtroAtual !== 'todos' ? filtroAtual : ''}</p></div>`;
@@ -869,20 +862,14 @@ function renderLista() {
   el.innerHTML = lista.map(ag => {
     const dataFmt = formatData(ag.data);
     const valor = ag.valor ? 'R$ ' + parseFloat(ag.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '–';
-    const isVencido = ag.status === 'pendente' && ag.data < hoje;
-    const diasAtraso = isVencido ? Math.floor((new Date() - new Date(ag.data + 'T00:00:00')) / (1000*60*60*24)) : 0;
-    const badgeLabel = isVencido ? `⚠️ ${diasAtraso}d atraso` : ag.status === 'pendente' ? 'Pendente' : ag.status === 'concluido' ? 'Concluído' : 'Cancelado';
-    const badgeCls = isVencido ? 'badge' : `badge badge-${ag.status}`;
-    const badgeStyle = isVencido ? 'background:#2a0808;color:#e74c3c;border:1px solid #e74c3c44;' : '';
     return `
-    <div class="card status-${ag.status}" style="${isVencido ? 'border-color:#e74c3c44;' : ''}">
-      ${isVencido ? '<div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#e74c3c;border-radius:4px 0 0 4px;"></div>' : ''}
+    <div class="card status-${ag.status}">
       <div class="card-top">
         <div>
           <div class="card-name">${ag.nome}</div>
           <div class="card-moto">🏍️ ${ag.moto}${ag.ano ? ' • ' + ag.ano : ''}</div>
         </div>
-        <span class="${badgeCls}" style="${badgeStyle}">${badgeLabel}</span>
+        <span class="badge badge-${ag.status}">${ag.status === 'pendente' ? 'Pendente' : ag.status === 'concluido' ? 'Concluído' : 'Cancelado'}</span>
       </div>
       <div class="card-service">🔧 ${ag.servico}</div>
       <div class="card-info">
@@ -895,13 +882,14 @@ function renderLista() {
       <div class="card-actions">
         <button class="act-btn whatsapp" onclick="enviarOrcamento('${ag.id}')">📋 Orçamento</button>
         ${ag.status === 'concluido' ? `<button class="act-btn whatsapp" onclick="enviarRecibo('${ag.id}')">🧾 Recibo</button>` : ''}
-        ${isVencido ? `<button class="act-btn whatsapp" onclick="enviarReagendamento('${ag.id}')">💬 Reagendar</button>` : `<button class="act-btn whatsapp" onclick="enviarWpp('${ag.id}')">💬 WPP</button>`}
+        <button class="act-btn whatsapp" onclick="enviarWpp('${ag.id}')">💬 WPP</button>
         ${ag.status === 'pendente' ? `<button class="act-btn concluir" onclick="mudarStatus('${ag.id}','concluido')">✔ Concluir</button>` : ''}
         ${ag.status === 'pendente' ? `<button class="act-btn cancelar" onclick="mudarStatus('${ag.id}','cancelado')">✕ Cancelar</button>` : ''}
         <button class="act-btn excluir" onclick="excluir('${ag.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
+}
 
 function renderVencidos() {
   const el = document.getElementById('vencidosCards');
