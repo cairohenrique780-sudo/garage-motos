@@ -580,11 +580,103 @@
   }
   .cal-ag-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
+  /* LOGIN */
+  .login-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 24px;
+  }
+  .login-screen.visible { display: flex; }
+  .login-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 42px;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .login-logo .red { color: var(--red); }
+  .login-sub {
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-top: 3px solid var(--red);
+    border-radius: 12px;
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .login-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .login-desc { font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+  .btn-google {
+    width: 100%;
+    padding: 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .btn-google:active { background: #222; }
+  .btn-google img { width: 22px; height: 22px; }
+  .login-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--muted);
+    font-size: 14px;
+    display: none;
+  }
+  .login-loading.visible { display: block; }
+
   /* DIVIDER */
   .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<!-- TELA DE LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo"><span class="white">GARAGE</span><span class="red">MOTOS</span></div>
+  <div class="login-sub">Pinturas • Agendamentos</div>
+  <div class="login-box">
+    <div class="login-title">Entrar</div>
+    <div class="login-desc">Faça login para acessar seus agendamentos salvos na nuvem em qualquer dispositivo.</div>
+    <button class="btn-google" onclick="loginGoogle()">
+      <img src="https://www.google.com/favicon.ico" alt="Google">
+      ENTRAR COM GOOGLE
+    </button>
+    <div class="login-loading" id="loginLoading">🔄 Conectando...</div>
+  </div>
+</div>
 
 <header>
   <div class="logo-wrap">
@@ -595,6 +687,7 @@
     </div>
   </div>
   <div class="header-badge" id="totalCount">0 AGEND.</div>
+  <button onclick="logout()" style="background:transparent;border:1px solid #333;color:var(--muted);padding:5px 10px;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-size:12px;cursor:pointer;letter-spacing:1px;">SAIR</button>
 </header>
 
 <div class="tabs">
@@ -761,6 +854,59 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// SUPABASE
+const SUPA_URL = 'https://knonnbzhkdbnzcmqxnaf.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtub25uYnpoa2RibnpjbXF4bmFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MTE1MzIsImV4cCI6MjA5NjE4NzUzMn0.PNXP18WJ03UdeyLFOy_BEP6VS-S_0P7a_mt5rUFhDA4';
+const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+let usuarioAtual = null;
+
+async function loginGoogle() {
+  document.getElementById('loginLoading').classList.add('visible');
+  const { error } = await supa.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  });
+  if (error) {
+    alert('Erro ao entrar: ' + error.message);
+    document.getElementById('loginLoading').classList.remove('visible');
+  }
+}
+
+async function logout() {
+  await supa.auth.signOut();
+  usuarioAtual = null;
+  agendamentos = [];
+  document.getElementById('loginScreen').classList.add('visible');
+  atualizarHeader();
+  toast('👋 Saiu com sucesso!');
+}
+
+async function carregarNuvem() {
+  if (!usuarioAtual) return;
+  const { data, error } = await supa.from('agendamentos').select('*').eq('user_id', usuarioAtual.id);
+  if (!error && data) {
+    agendamentos = data.map(d => ({ ...d.dados, _dbid: d.id }));
+    salvarLocal();
+    atualizarHeader();
+  }
+}
+
+async function salvarNuvem(ag) {
+  if (!usuarioAtual) return;
+  await supa.from('agendamentos').upsert({
+    id_local: String(ag.id),
+    user_id: usuarioAtual.id,
+    data: ag.data,
+    dados: ag
+  }, { onConflict: 'id_local,user_id' });
+}
+
+async function excluirNuvem(id) {
+  if (!usuarioAtual) return;
+  await supa.from('agendamentos').delete().eq('id_local', String(id)).eq('user_id', usuarioAtual.id);
+}
+
+// ESTADO
 const STORE = 'garagemotos_agenda_v2';
 let agendamentos = JSON.parse(localStorage.getItem(STORE) || '[]');
 let filtroAtual = 'todos';
@@ -768,8 +914,12 @@ let modalCallback = null;
 
 document.getElementById('data').min = new Date().toISOString().split('T')[0];
 
-function salvar() {
+function salvarLocal() {
   localStorage.setItem(STORE, JSON.stringify(agendamentos));
+}
+
+function salvar() {
+  salvarLocal();
   atualizarHeader();
 }
 
@@ -830,6 +980,7 @@ function salvarAgendamento() {
   const ag = { id: Date.now(), nome, telefone, moto, ano, servico, data, valor, pagamento, obs, status: 'pendente', criado: new Date().toISOString() };
   agendamentos.push(ag);
   salvar();
+  salvarNuvem(ag);
 
   const agId = ag.id;
   alertEl.className = 'alert success';
@@ -1182,6 +1333,7 @@ function salvarEdicao(id) {
   ag.obs = novaObs;
   if (novoValor) ag.valor = novoValor;
   salvar();
+  salvarNuvem(ag);
   renderLista();
   toast('✔ Agendamento atualizado!');
 }
@@ -1267,6 +1419,7 @@ function mudarStatus(id, novoStatus) {
   abrirModal(`Deseja ${label} o agendamento de ${ag.nome}?\n${ag.servico} – ${formatData(ag.data)}`, () => {
     ag.status = novoStatus;
     salvar();
+    salvarNuvem(ag);
     renderLista();
     toast(novoStatus === 'concluido' ? '✔ Marcado como concluído!' : '✕ Cancelado');
   });
@@ -1276,6 +1429,7 @@ function excluir(id) {
   const ag = agendamentos.find(a => a.id == id);
   if (!ag) return;
   abrirModal(`Excluir definitivamente o agendamento de ${ag.nome}? Esta ação não pode ser desfeita.`, () => {
+    excluirNuvem(id);
     agendamentos = agendamentos.filter(a => a.id != id);
     salvar();
     renderLista();
@@ -1303,7 +1457,35 @@ function formatData(str) {
 
 atualizarHeader();
 
-// NOTIFICAÇÕES
+// AUTH
+supa.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    usuarioAtual = session.user;
+    document.getElementById('loginScreen').classList.remove('visible');
+    await carregarNuvem();
+    dispararNotificacoes();
+  } else {
+    usuarioAtual = null;
+    document.getElementById('loginScreen').classList.add('visible');
+  }
+});
+
+window.addEventListener('load', async () => {
+  const { data: { session } } = await supa.auth.getSession();
+  if (!session) {
+    document.getElementById('loginScreen').classList.add('visible');
+    return;
+  }
+  usuarioAtual = session.user;
+  document.getElementById('loginScreen').classList.remove('visible');
+  await carregarNuvem();
+  pedirPermissaoNotificacao();
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  const qtd = agendamentos.filter(a => a.data === amanha.toISOString().split('T')[0] && a.status === 'pendente').length;
+  if (qtd > 0) setTimeout(() => toast(`🔔 ${qtd} cliente(s) para amanhã! Veja Alertas.`, 4000), 1200);
+  setTimeout(() => dispararNotificacoes(), 2000);
+});
 function pedirPermissaoNotificacao() {
   if (!('Notification' in window)) return;
   if (Notification.permission === 'default') {
@@ -1355,18 +1537,7 @@ function dispararNotificacoes() {
   }
 }
 
-window.addEventListener('load', () => {
-  // Pedir permissão ao abrir
-  pedirPermissaoNotificacao();
-
-  const amanha = new Date();
-  amanha.setDate(amanha.getDate() + 1);
-  const qtd = agendamentos.filter(a => a.data === amanha.toISOString().split('T')[0] && a.status === 'pendente').length;
-  if (qtd > 0) setTimeout(() => toast(`🔔 ${qtd} cliente(s) para amanhã! Veja Alertas.`, 4000), 1200);
-
-  // Disparar notificações após 2 segundos
-  setTimeout(() => dispararNotificacoes(), 2000);
-});
+// FIM
 </script>
 </body>
 </html>
