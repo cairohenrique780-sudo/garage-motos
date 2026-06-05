@@ -1010,14 +1010,49 @@ function renderStats() {
     <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-label">Total</div></div>
     <div class="stat-card"><div class="stat-val">${pendentes}</div><div class="stat-label">Pendentes</div></div>
     <div class="stat-card"><div class="stat-val">${concluidos}</div><div class="stat-label">Concluídos</div></div>
-    <div class="stat-card green"><div class="stat-val" style="font-size:26px;">R$${receita.toLocaleString('pt-BR',{minimumFractionDigits:0})}</div><div class="stat-label">Receita</div></div>
+    <div class="stat-card green"><div class="stat-val" style="font-size:26px;">R$${receita.toLocaleString('pt-BR',{minimumFractionDigits:0})}</div><div class="stat-label">Receita Total</div></div>
   `;
 
+  // RECEITA POR MÊS
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const receitaMes = {};
+  agendamentos.filter(a => a.status !== 'cancelado' && a.valor).forEach(ag => {
+    const [y, m] = ag.data.split('-');
+    const chave = `${y}-${m}`;
+    if (!receitaMes[chave]) receitaMes[chave] = 0;
+    receitaMes[chave] += parseFloat(ag.valor || 0);
+  });
+
+  const chavesOrdenadas = Object.keys(receitaMes).sort();
+  const maxReceita = Math.max(...Object.values(receitaMes), 1);
+
+  const receitaMesHtml = chavesOrdenadas.length ? `
+    <div class="sec-title" style="font-size:20px;margin-bottom:12px;">Receita por Mês</div>
+    <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
+      ${chavesOrdenadas.map(chave => {
+        const [y, m] = chave.split('-');
+        const val = receitaMes[chave];
+        const pct = Math.round((val / maxReceita) * 100);
+        const label = MESES[parseInt(m)-1] + ' ' + y;
+        return `
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--text);">${label}</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:var(--success);">R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          </div>
+          <div style="background:var(--border);border-radius:4px;height:10px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:var(--red);border-radius:4px;transition:width 0.4s ease;"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  ` : '';
+
+  // PRÓXIMOS
   const hoje = new Date().toISOString().split('T')[0];
   const proximos = [...agendamentos].filter(a => a.status === 'pendente' && a.data >= hoje).sort((a,b) => new Date(a.data)-new Date(b.data)).slice(0,6);
-  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-  document.getElementById('statsLista').innerHTML = proximos.length ? `
+  document.getElementById('statsLista').innerHTML = receitaMesHtml + (proximos.length ? `
     <div class="sec-title" style="font-size:20px;margin-bottom:12px;">Próximos</div>
     ${proximos.map(ag => `
       <div class="prox-item">
@@ -1031,7 +1066,7 @@ function renderStats() {
         </div>
       </div>
     `).join('')}
-  ` : '';
+  ` : '');
 }
 
 // CALENDÁRIO
