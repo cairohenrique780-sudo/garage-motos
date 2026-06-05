@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -891,8 +890,17 @@ function renderLista() {
         <div class="info-item">📱 <strong>${ag.telefone}</strong></div>
         ${ag.pagamento ? `<div class="info-item">💳 <strong>${ag.pagamento}</strong></div>` : ''}
       </div>
-      ${ag.obs ? `<div class="card-obs">📝 ${ag.obs}</div>` : ''}
+      ${ag.obs ? `<div class="card-obs" id="obs-txt-${ag.id}">📝 ${ag.obs}</div>` : `<div class="card-obs" id="obs-txt-${ag.id}" style="display:none;"></div>`}
+      <div id="obs-edit-${ag.id}" style="display:none;margin-bottom:10px;">
+        <textarea id="obs-input-${ag.id}" rows="2" style="width:100%;background:var(--surface2);border:1.5px solid var(--red);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;padding:8px 10px;outline:none;resize:none;">${ag.obs || ''}</textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <input type="number" id="valor-input-${ag.id}" placeholder="Novo valor R$" value="${ag.valor || ''}" style="flex:1;background:var(--surface2);border:1.5px solid var(--red);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;padding:8px 10px;outline:none;">
+          <button onclick="salvarEdicao('${ag.id}')" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;">✔ Salvar</button>
+          <button onclick="cancelarEdicao('${ag.id}')" style="background:var(--surface2);color:var(--muted);border:1.5px solid var(--border);border-radius:6px;padding:8px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;">✕</button>
+        </div>
+      </div>
       <div class="card-actions">
+        <button class="act-btn" onclick="abrirEdicao('${ag.id}')">✏️ Editar</button>
         <button class="act-btn whatsapp" onclick="enviarOrcamento('${ag.id}')">📋 Orçamento</button>
         ${ag.status === 'concluido' ? `<button class="act-btn whatsapp" onclick="enviarRecibo('${ag.id}')">🧾 Recibo</button>` : ''}
         ${isVencido ? `<button class="act-btn whatsapp" onclick="enviarReagendamento('${ag.id}')">💬 Oferta WPP</button>` : `<button class="act-btn whatsapp" onclick="enviarWpp('${ag.id}')">💬 WPP</button>`}
@@ -1116,6 +1124,31 @@ function renderDetalheCalendario() {
       </div>
     `).join('')}
   </div>`;
+}
+
+function abrirEdicao(id) {
+  document.getElementById('obs-txt-' + id).style.display = 'none';
+  document.getElementById('obs-edit-' + id).style.display = 'block';
+}
+
+function cancelarEdicao(id) {
+  document.getElementById('obs-edit-' + id).style.display = 'none';
+  const ag = agendamentos.find(a => a.id == id);
+  const txtEl = document.getElementById('obs-txt-' + id);
+  if (ag.obs) { txtEl.textContent = '📝 ' + ag.obs; txtEl.style.display = 'block'; }
+  else txtEl.style.display = 'none';
+}
+
+function salvarEdicao(id) {
+  const ag = agendamentos.find(a => a.id == id);
+  if (!ag) return;
+  const novaObs = document.getElementById('obs-input-' + id).value.trim();
+  const novoValor = document.getElementById('valor-input-' + id).value.trim();
+  ag.obs = novaObs;
+  if (novoValor) ag.valor = novoValor;
+  salvar();
+  renderLista();
+  toast('✔ Agendamento atualizado!');
 }
 
 function enviarConfirmacao(id) {
