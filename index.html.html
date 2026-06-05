@@ -1303,11 +1303,69 @@ function formatData(str) {
 
 atualizarHeader();
 
+// NOTIFICAÇÕES
+function pedirPermissaoNotificacao() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function dispararNotificacoes() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const hoje = new Date().toISOString().split('T')[0];
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  const amanhaStr = amanha.toISOString().split('T')[0];
+
+  // Agendamentos de HOJE
+  const deHoje = agendamentos.filter(a => a.data === hoje && a.status === 'pendente');
+  deHoje.forEach(ag => {
+    new Notification('🏍️ Garage Motos — Serviço HOJE!', {
+      body: `${ag.nome} • ${ag.servico} • ${ag.moto}`,
+      icon: document.querySelector('link[rel="apple-touch-icon"]')?.href || '',
+      badge: document.querySelector('link[rel="apple-touch-icon"]')?.href || '',
+      tag: 'hoje-' + ag.id,
+    });
+  });
+
+  // Agendamentos de AMANHÃ
+  const deAmanha = agendamentos.filter(a => a.data === amanhaStr && a.status === 'pendente');
+  if (deAmanha.length > 0) {
+    setTimeout(() => {
+      new Notification(`🔔 Garage Motos — ${deAmanha.length} serviço(s) amanhã!`, {
+        body: deAmanha.map(a => `${a.nome} • ${a.servico}`).join('\n'),
+        icon: document.querySelector('link[rel="apple-touch-icon"]')?.href || '',
+        tag: 'amanha-resumo',
+      });
+    }, 1500);
+  }
+
+  // Agendamentos VENCIDOS
+  const vencidos = agendamentos.filter(a => a.data < hoje && a.status === 'pendente');
+  if (vencidos.length > 0) {
+    setTimeout(() => {
+      new Notification(`⚠️ Garage Motos — ${vencidos.length} agendamento(s) vencido(s)!`, {
+        body: vencidos.map(a => `${a.nome} • ${a.servico}`).join('\n'),
+        icon: document.querySelector('link[rel="apple-touch-icon"]')?.href || '',
+        tag: 'vencidos-resumo',
+      });
+    }, 3000);
+  }
+}
+
 window.addEventListener('load', () => {
+  // Pedir permissão ao abrir
+  pedirPermissaoNotificacao();
+
   const amanha = new Date();
   amanha.setDate(amanha.getDate() + 1);
   const qtd = agendamentos.filter(a => a.data === amanha.toISOString().split('T')[0] && a.status === 'pendente').length;
   if (qtd > 0) setTimeout(() => toast(`🔔 ${qtd} cliente(s) para amanhã! Veja Alertas.`, 4000), 1200);
+
+  // Disparar notificações após 2 segundos
+  setTimeout(() => dispararNotificacoes(), 2000);
 });
 </script>
 </body>
