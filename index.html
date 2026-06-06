@@ -201,21 +201,23 @@
   .alert.error { background: #2a0a0a; border: 1px solid var(--red); color: #ff6666; display: block; }
 
   /* FILTER */
-  .filter-row { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 2px; }
+  .filter-row { display: flex; gap: 4px; margin-bottom: 12px; width: 100%; }
   .filter-btn {
-    padding: 5px 14px;
+    flex: 1;
+    padding: 7px 2px;
     border-radius: 4px;
     border: 1.5px solid var(--border);
     background: transparent;
     color: var(--muted);
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 1px;
+    font-size: 11px;
+    letter-spacing: 0px;
     text-transform: uppercase;
     cursor: pointer;
-    white-space: nowrap;
+    text-align: center;
     transition: all 0.2s;
+    white-space: nowrap;
   }
   .filter-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
 
@@ -471,6 +473,113 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* CALENDÁRIO */
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .cal-nav-btn {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    width: 36px; height: 36px;
+    font-size: 18px;
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+  }
+  .cal-mes-ano {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .cal-dia-nome {
+    text-align: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    padding: 4px 0;
+  }
+  .cal-dia {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    position: relative;
+    transition: all 0.15s;
+  }
+  .cal-dia.vazio { background: transparent; border-color: transparent; cursor: default; }
+  .cal-dia.hoje { border-color: var(--red); color: var(--red); }
+  .cal-dia.tem-ag { background: #2a0808; border-color: var(--red); }
+  .cal-dia.selecionado { background: var(--red); color: #fff; border-color: var(--red); }
+  .cal-dot {
+    width: 5px; height: 5px;
+    background: var(--red);
+    border-radius: 50%;
+    margin-top: 2px;
+  }
+  .cal-dia.selecionado .cal-dot { background: #fff; }
+  .cal-detalhe {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 12px;
+  }
+  .cal-detalhe-titulo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+  .cal-ag-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--surface2);
+    border-radius: 6px;
+    border-left: 3px solid var(--red);
+    margin-bottom: 8px;
+  }
+  .cal-ag-nome {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+  }
+  .cal-ag-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
   /* DIVIDER */
   .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 </style>
@@ -497,6 +606,9 @@
   </div>
   <div class="tab" onclick="goTab('lembretes')">
     <span class="tab-icon">🔔</span>Alertas
+  </div>
+  <div class="tab" onclick="goTab('calendario')">
+    <span class="tab-icon">🗓️</span>Calendário
   </div>
   <div class="tab" onclick="goTab('stats')">
     <span class="tab-icon">📊</span>Resumo
@@ -553,6 +665,17 @@
       </div>
     </div>
     <div class="field">
+      <label>Forma de Pagamento</label>
+      <select id="pagamento">
+        <option value="">Selecione...</option>
+        <option>Dinheiro</option>
+        <option>PIX</option>
+        <option>Cartão de Débito</option>
+        <option>Cartão de Crédito</option>
+        <option>A combinar</option>
+      </select>
+    </div>
+    <div class="field">
       <label>Observações / Cores</label>
       <textarea id="obs" rows="2" placeholder="Ex: Azul metálico com friso vermelho..."></textarea>
     </div>
@@ -567,6 +690,7 @@
       <button class="filter-btn" onclick="setFiltro('pendente', this)">Pendentes</button>
       <button class="filter-btn" onclick="setFiltro('concluido', this)">Concluídos</button>
       <button class="filter-btn" onclick="setFiltro('cancelado', this)">Cancelados</button>
+      <button class="filter-btn" onclick="setFiltro('vencido', this)">⚠️ Vencidos</button>
     </div>
     <div id="listaCards"></div>
   </section>
@@ -579,6 +703,37 @@
       Clientes com serviço marcado para amanhã aparecem aqui. Clique em <strong>Enviar WPP</strong> para abrir o WhatsApp com a mensagem de lembrete já pronta — é só apertar enviar!
     </div>
     <div id="lembretesCards"></div>
+  </section>
+
+  <!-- ABA: VENCIDOS -->
+  <section id="vencidos">
+    <div class="sec-title">Vencidos</div>
+    <div class="wpp-info" style="background:#2a0808;border-color:#e74c3c33;">
+      <strong style="color:#e74c3c;">⚠️ Atenção:</strong><br>
+      Clientes que tinham agendamento pendente e não trouxeram a moto na data marcada. Entre em contato para reagendar!
+    </div>
+    <div id="vencidosCards"></div>
+  </section>
+
+  <!-- ABA: CALENDÁRIO -->
+  <section id="calendario">
+    <div class="sec-title">Calendário</div>
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="mudarMes(-1)">&#8592;</button>
+      <div class="cal-mes-ano" id="calMesAno"></div>
+      <button class="cal-nav-btn" onclick="mudarMes(1)">&#8594;</button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-dia-nome">Dom</div>
+      <div class="cal-dia-nome">Seg</div>
+      <div class="cal-dia-nome">Ter</div>
+      <div class="cal-dia-nome">Qua</div>
+      <div class="cal-dia-nome">Qui</div>
+      <div class="cal-dia-nome">Sex</div>
+      <div class="cal-dia-nome">Sáb</div>
+    </div>
+    <div class="cal-grid" id="calDias"></div>
+    <div id="calDetalhe"></div>
   </section>
 
   <!-- ABA: RESUMO -->
@@ -620,7 +775,9 @@ function salvar() {
 
 function atualizarHeader() {
   const p = agendamentos.filter(a => a.status === 'pendente').length;
-  document.getElementById('totalCount').textContent = p + ' AGEND.';
+  const hoje = new Date().toISOString().split('T')[0];
+  const v = agendamentos.filter(a => a.status === 'pendente' && a.data < hoje).length;
+  document.getElementById('totalCount').textContent = p + ' AGEND.' + (v > 0 ? ' • ⚠️' + v : '');
 }
 
 function toast(msg, dur = 2800) {
@@ -634,10 +791,12 @@ function goTab(id) {
   document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  const idx = ['agendar','lista','lembretes','stats'].indexOf(id);
+  const idx = ['agendar','lista','lembretes','calendario','stats'].indexOf(id);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   if (id === 'lista') renderLista();
   if (id === 'lembretes') renderLembretes();
+  if (id === 'vencidos') renderVencidos();
+  if (id === 'calendario') renderCalendario();
   if (id === 'stats') renderStats();
 }
 
@@ -658,6 +817,7 @@ function salvarAgendamento() {
   const valor = document.getElementById('valor').value;
   const obs = document.getElementById('obs').value.trim();
   const ano = document.getElementById('ano').value.trim();
+  const pagamento = document.getElementById('pagamento').value;
   const alertEl = document.getElementById('alert');
   alertEl.className = 'alert';
 
@@ -667,16 +827,19 @@ function salvarAgendamento() {
     return;
   }
 
-  agendamentos.push({ id: Date.now(), nome, telefone, moto, ano, servico, data, valor, obs, status: 'pendente', criado: new Date().toISOString() });
+  const ag = { id: Date.now(), nome, telefone, moto, ano, servico, data, valor, pagamento, obs, status: 'pendente', criado: new Date().toISOString() };
+  agendamentos.push(ag);
   salvar();
 
+  const agId = ag.id;
   alertEl.className = 'alert success';
-  alertEl.textContent = '✔ Agendamento de ' + nome + ' salvo!';
+  alertEl.innerHTML = `✔ Agendamento de ${nome} salvo!<br><br><button onclick="enviarConfirmacao(${agId})" style="background:#2ecc71;color:#fff;border:none;border-radius:6px;padding:12px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:1px;cursor:pointer;width:100%;margin-top:4px;">💬 ENVIAR CONFIRMAÇÃO NO WHATSAPP</button>`;
   ['nome','telefone','moto','ano','valor','obs'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('servico').value = '';
+  document.getElementById('pagamento').value = '';
   document.getElementById('data').value = '';
   toast('✔ ' + nome.split(' ')[0] + ' agendado!');
-  setTimeout(() => { alertEl.className = 'alert'; }, 3500);
+  setTimeout(() => { alertEl.className = 'alert'; }, 10000);
 }
 
 function setFiltro(f, btn) {
@@ -688,8 +851,14 @@ function setFiltro(f, btn) {
 
 function renderLista() {
   const el = document.getElementById('listaCards');
+  const hoje = new Date().toISOString().split('T')[0];
   let lista = [...agendamentos].sort((a,b) => new Date(a.data) - new Date(b.data));
-  if (filtroAtual !== 'todos') lista = lista.filter(a => a.status === filtroAtual);
+
+  if (filtroAtual === 'vencido') {
+    lista = lista.filter(a => a.status === 'pendente' && a.data < hoje);
+  } else if (filtroAtual !== 'todos') {
+    lista = lista.filter(a => a.status === filtroAtual);
+  }
 
   if (!lista.length) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏍️</div><p>Nenhum agendamento ${filtroAtual !== 'todos' ? filtroAtual : ''}</p></div>`;
@@ -699,30 +868,111 @@ function renderLista() {
   el.innerHTML = lista.map(ag => {
     const dataFmt = formatData(ag.data);
     const valor = ag.valor ? 'R$ ' + parseFloat(ag.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '–';
+    const isVencido = ag.status === 'pendente' && ag.data < hoje;
+    const diasAtraso = isVencido ? Math.floor((new Date() - new Date(ag.data + 'T00:00:00')) / (1000*60*60*24)) : 0;
+    const badgeLabel = isVencido ? `⚠️ ${diasAtraso}d atraso` : ag.status === 'pendente' ? 'Pendente' : ag.status === 'concluido' ? 'Concluído' : 'Cancelado';
+    const badgeCls = isVencido ? 'badge' : `badge badge-${ag.status}`;
+    const badgeStyle = isVencido ? 'background:#2a0808;color:#e74c3c;border:1px solid #e74c3c44;' : '';
     return `
-    <div class="card status-${ag.status}">
+    <div class="card status-${ag.status}" style="${isVencido ? 'border-color:#e74c3c44;' : ''}">
+      ${isVencido ? '<div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#e74c3c;border-radius:4px 0 0 4px;"></div>' : ''}
       <div class="card-top">
         <div>
           <div class="card-name">${ag.nome}</div>
           <div class="card-moto">🏍️ ${ag.moto}${ag.ano ? ' • ' + ag.ano : ''}</div>
         </div>
-        <span class="badge badge-${ag.status}">${ag.status === 'pendente' ? 'Pendente' : ag.status === 'concluido' ? 'Concluído' : 'Cancelado'}</span>
+        <span class="${badgeCls}" style="${badgeStyle}">${badgeLabel}</span>
       </div>
       <div class="card-service">🔧 ${ag.servico}</div>
       <div class="card-info">
         <div class="info-item">📅 <strong>${dataFmt}</strong></div>
         <div class="info-item">💰 <strong>${valor}</strong></div>
         <div class="info-item">📱 <strong>${ag.telefone}</strong></div>
+        ${ag.pagamento ? `<div class="info-item">💳 <strong>${ag.pagamento}</strong></div>` : ''}
       </div>
-      ${ag.obs ? `<div class="card-obs">📝 ${ag.obs}</div>` : ''}
+      ${ag.obs ? `<div class="card-obs" id="obs-txt-${ag.id}">📝 ${ag.obs}</div>` : `<div class="card-obs" id="obs-txt-${ag.id}" style="display:none;"></div>`}
+      <div id="obs-edit-${ag.id}" style="display:none;margin-bottom:10px;">
+        <textarea id="obs-input-${ag.id}" rows="2" style="width:100%;background:var(--surface2);border:1.5px solid var(--red);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;padding:8px 10px;outline:none;resize:none;">${ag.obs || ''}</textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <input type="number" id="valor-input-${ag.id}" placeholder="Novo valor R$" value="${ag.valor || ''}" style="flex:1;background:var(--surface2);border:1.5px solid var(--red);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;padding:8px 10px;outline:none;">
+          <button onclick="salvarEdicao('${ag.id}')" style="background:var(--red);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;">✔ Salvar</button>
+          <button onclick="cancelarEdicao('${ag.id}')" style="background:var(--surface2);color:var(--muted);border:1.5px solid var(--border);border-radius:6px;padding:8px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;cursor:pointer;">✕</button>
+        </div>
+      </div>
       <div class="card-actions">
-        <button class="act-btn whatsapp" onclick="enviarWpp('${ag.id}')">💬 WhatsApp</button>
+        <button class="act-btn" onclick="abrirEdicao('${ag.id}')">✏️ Editar</button>
+        <button class="act-btn whatsapp" onclick="enviarOrcamento('${ag.id}')">📋 Orçamento</button>
+        ${ag.status === 'concluido' ? `<button class="act-btn whatsapp" onclick="enviarRecibo('${ag.id}')">🧾 Recibo</button>` : ''}
+        ${isVencido ? `<button class="act-btn whatsapp" onclick="enviarReagendamento('${ag.id}')">💬 Oferta WPP</button>` : `<button class="act-btn whatsapp" onclick="enviarWpp('${ag.id}')">💬 WPP</button>`}
         ${ag.status === 'pendente' ? `<button class="act-btn concluir" onclick="mudarStatus('${ag.id}','concluido')">✔ Concluir</button>` : ''}
         ${ag.status === 'pendente' ? `<button class="act-btn cancelar" onclick="mudarStatus('${ag.id}','cancelado')">✕ Cancelar</button>` : ''}
         <button class="act-btn excluir" onclick="excluir('${ag.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function renderVencidos() {
+  const el = document.getElementById('vencidosCards');
+  const hoje = new Date().toISOString().split('T')[0];
+  const lista = agendamentos
+    .filter(a => a.status === 'pendente' && a.data < hoje)
+    .sort((a,b) => new Date(a.data) - new Date(b.data));
+
+  if (!lista.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>Nenhum agendamento vencido!</p></div>`;
+    return;
+  }
+
+  el.innerHTML = lista.map(ag => {
+    const hoje = new Date();
+    const dataAg = new Date(ag.data + 'T00:00:00');
+    const diasAtraso = Math.floor((hoje - dataAg) / (1000*60*60*24));
+    const valor = ag.valor ? 'R$ ' + parseFloat(ag.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '–';
+    return `
+    <div class="card" style="border-color:#e74c3c44;">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#e74c3c;border-radius:4px 0 0 4px;"></div>
+      <div class="card-top">
+        <div>
+          <div class="card-name">${ag.nome}</div>
+          <div class="card-moto">🏍️ ${ag.moto}${ag.ano ? ' • ' + ag.ano : ''}</div>
+        </div>
+        <span class="badge" style="background:#2a0808;color:#e74c3c;border:1px solid #e74c3c44;">⚠️ ${diasAtraso}d atraso</span>
+      </div>
+      <div class="card-service">🔧 ${ag.servico}</div>
+      <div class="card-info">
+        <div class="info-item">📅 <strong>Era: ${formatData(ag.data)}</strong></div>
+        <div class="info-item">💰 <strong>${valor}</strong></div>
+        <div class="info-item">📱 <strong>${ag.telefone}</strong></div>
+      </div>
+      ${ag.obs ? `<div class="card-obs">📝 ${ag.obs}</div>` : ''}
+      <div class="card-actions">
+        <button class="act-btn whatsapp" onclick="enviarReagendamento('${ag.id}')">💬 Reagendar WPP</button>
+        <button class="act-btn concluir" onclick="mudarStatus('${ag.id}','concluido')">✔ Concluir</button>
+        <button class="act-btn cancelar" onclick="mudarStatus('${ag.id}','cancelado')">✕ Cancelar</button>
+        <button class="act-btn excluir" onclick="excluir('${ag.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function enviarReagendamento(id) {
+  const ag = agendamentos.find(a => a.id == id);
+  if (!ag) return;
+  const tel = ag.telefone.replace(/\D/g,'');
+  const msg =
+    `Olá ${ag.nome}! 👋\n\n` +
+    `Tudo bem? Aqui é da *Garage Motos Pinturas*! 🏍️🔥\n\n` +
+    `Notamos que você ainda não trouxe sua *${ag.moto}* para o serviço de *${ag.servico}*.\n\n` +
+    `Sua moto merece uma nova vida! Uma pintura nova transforma tudo — ` +
+    `valoriza a moto, chama atenção e dá aquela sensação de moto zero! ✨\n\n` +
+    `🎁 *OFERTA ESPECIAL ESTA SEMANA:*\n` +
+    `Reagende agora e garanta *10% de desconto* no seu serviço!\n` +
+    `⏳ Válido somente até domingo.\n\n` +
+    `É só responder essa mensagem para garantir sua vaga! 🔥\n\n` +
+    `Te esperamos! 💪\n` +
+    `*Garage Motos Pinturas*`;
+  window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function renderLembretes() {
@@ -760,14 +1010,49 @@ function renderStats() {
     <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-label">Total</div></div>
     <div class="stat-card"><div class="stat-val">${pendentes}</div><div class="stat-label">Pendentes</div></div>
     <div class="stat-card"><div class="stat-val">${concluidos}</div><div class="stat-label">Concluídos</div></div>
-    <div class="stat-card green"><div class="stat-val" style="font-size:26px;">R$${receita.toLocaleString('pt-BR',{minimumFractionDigits:0})}</div><div class="stat-label">Receita</div></div>
+    <div class="stat-card green"><div class="stat-val" style="font-size:26px;">R$${receita.toLocaleString('pt-BR',{minimumFractionDigits:0})}</div><div class="stat-label">Receita Total</div></div>
   `;
 
+  // RECEITA POR MÊS
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const receitaMes = {};
+  agendamentos.filter(a => a.status !== 'cancelado' && a.valor).forEach(ag => {
+    const [y, m] = ag.data.split('-');
+    const chave = `${y}-${m}`;
+    if (!receitaMes[chave]) receitaMes[chave] = 0;
+    receitaMes[chave] += parseFloat(ag.valor || 0);
+  });
+
+  const chavesOrdenadas = Object.keys(receitaMes).sort();
+  const maxReceita = Math.max(...Object.values(receitaMes), 1);
+
+  const receitaMesHtml = chavesOrdenadas.length ? `
+    <div class="sec-title" style="font-size:20px;margin-bottom:12px;">Receita por Mês</div>
+    <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
+      ${chavesOrdenadas.map(chave => {
+        const [y, m] = chave.split('-');
+        const val = receitaMes[chave];
+        const pct = Math.round((val / maxReceita) * 100);
+        const label = MESES[parseInt(m)-1] + ' ' + y;
+        return `
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--text);">${label}</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;color:var(--success);">R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          </div>
+          <div style="background:var(--border);border-radius:4px;height:10px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:var(--red);border-radius:4px;transition:width 0.4s ease;"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  ` : '';
+
+  // PRÓXIMOS
   const hoje = new Date().toISOString().split('T')[0];
   const proximos = [...agendamentos].filter(a => a.status === 'pendente' && a.data >= hoje).sort((a,b) => new Date(a.data)-new Date(b.data)).slice(0,6);
-  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-  document.getElementById('statsLista').innerHTML = proximos.length ? `
+  document.getElementById('statsLista').innerHTML = receitaMesHtml + (proximos.length ? `
     <div class="sec-title" style="font-size:20px;margin-bottom:12px;">Próximos</div>
     ${proximos.map(ag => `
       <div class="prox-item">
@@ -781,7 +1066,189 @@ function renderStats() {
         </div>
       </div>
     `).join('')}
-  ` : '';
+  ` : '');
+}
+
+// CALENDÁRIO
+let calAno = new Date().getFullYear();
+let calMes = new Date().getMonth();
+let calDiaSel = null;
+
+const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function mudarMes(d) {
+  calMes += d;
+  if (calMes > 11) { calMes = 0; calAno++; }
+  if (calMes < 0) { calMes = 11; calAno--; }
+  calDiaSel = null;
+  renderCalendario();
+}
+
+function renderCalendario() {
+  const mesAno = document.getElementById('calMesAno');
+  mesAno.textContent = MESES_FULL[calMes] + ' ' + calAno;
+
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().split('T')[0];
+  const primeiroDia = new Date(calAno, calMes, 1).getDay();
+  const diasNoMes = new Date(calAno, calMes + 1, 0).getDate();
+
+  // Mapear agendamentos do mês
+  const agMes = {};
+  agendamentos.forEach(ag => {
+    const [y,m] = ag.data.split('-').map(Number);
+    if (y === calAno && m === calMes + 1 && ag.status === 'pendente') {
+      const d = parseInt(ag.data.split('-')[2]);
+      if (!agMes[d]) agMes[d] = [];
+      agMes[d].push(ag);
+    }
+  });
+
+  let html = '';
+  // Células vazias antes do primeiro dia
+  for (let i = 0; i < primeiroDia; i++) {
+    html += `<div class="cal-dia vazio"></div>`;
+  }
+  // Dias do mês
+  for (let d = 1; d <= diasNoMes; d++) {
+    const dataStr = `${calAno}-${String(calMes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isHoje = dataStr === hojeStr;
+    const temAg = agMes[d] && agMes[d].length > 0;
+    const isSel = calDiaSel === d;
+    let cls = 'cal-dia';
+    if (isHoje) cls += ' hoje';
+    if (temAg) cls += ' tem-ag';
+    if (isSel) cls += ' selecionado';
+    html += `<div class="${cls}" onclick="selecionarDia(${d})">
+      ${d}
+      ${temAg ? '<div class="cal-dot"></div>' : ''}
+    </div>`;
+  }
+
+  document.getElementById('calDias').innerHTML = html;
+  renderDetalheCalendario();
+}
+
+function selecionarDia(d) {
+  calDiaSel = calDiaSel === d ? null : d;
+  renderCalendario();
+}
+
+function renderDetalheCalendario() {
+  const el = document.getElementById('calDetalhe');
+  if (!calDiaSel) { el.innerHTML = ''; return; }
+
+  const dataStr = `${calAno}-${String(calMes+1).padStart(2,'0')}-${String(calDiaSel).padStart(2,'0')}`;
+  const lista = agendamentos.filter(a => a.data === dataStr && a.status === 'pendente');
+
+  if (!lista.length) {
+    el.innerHTML = `<div class="cal-detalhe"><div class="cal-detalhe-titulo">📅 ${calDiaSel}/${calMes+1}/${calAno}</div><p style="color:var(--muted);font-size:14px;">Nenhum agendamento neste dia.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="cal-detalhe">
+    <div class="cal-detalhe-titulo">📅 ${calDiaSel}/${calMes+1}/${calAno} — ${lista.length} agendamento(s)</div>
+    ${lista.map(ag => `
+      <div class="cal-ag-item">
+        <div style="flex:1">
+          <div class="cal-ag-nome">${ag.nome}</div>
+          <div class="cal-ag-sub">🏍️ ${ag.moto} • 🔧 ${ag.servico}</div>
+          ${ag.valor ? `<div class="cal-ag-sub">💰 R$ ${parseFloat(ag.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>` : ''}
+        </div>
+        <button class="btn-wpp" onclick="enviarWpp('${ag.id}')">💬</button>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function abrirEdicao(id) {
+  document.getElementById('obs-txt-' + id).style.display = 'none';
+  document.getElementById('obs-edit-' + id).style.display = 'block';
+}
+
+function cancelarEdicao(id) {
+  document.getElementById('obs-edit-' + id).style.display = 'none';
+  const ag = agendamentos.find(a => a.id == id);
+  const txtEl = document.getElementById('obs-txt-' + id);
+  if (ag.obs) { txtEl.textContent = '📝 ' + ag.obs; txtEl.style.display = 'block'; }
+  else txtEl.style.display = 'none';
+}
+
+function salvarEdicao(id) {
+  const ag = agendamentos.find(a => a.id == id);
+  if (!ag) return;
+  const novaObs = document.getElementById('obs-input-' + id).value.trim();
+  const novoValor = document.getElementById('valor-input-' + id).value.trim();
+  ag.obs = novaObs;
+  if (novoValor) ag.valor = novoValor;
+  salvar();
+  renderLista();
+  toast('✔ Agendamento atualizado!');
+}
+
+function enviarConfirmacao(id) {
+  const ag = agendamentos.find(a => a.id == id);
+  if (!ag) return;
+  const tel = ag.telefone.replace(/\D/g,'');
+  const valor = ag.valor ? 'R$ ' + parseFloat(ag.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) : 'A combinar';
+  const pagamento = ag.pagamento || 'A combinar';
+  const msg =
+    `Olá ${ag.nome}! 👋\n\n` +
+    `✅ *Seu agendamento foi confirmado!*\n` +
+    `*Garage Motos Pinturas* 🏍️🔥\n\n` +
+    `━━━━━━━━━━━━━━━━\n` +
+    `🏍️ *Moto:* ${ag.moto}${ag.ano?' ('+ag.ano+')':''}\n` +
+    `🔧 *Serviço:* ${ag.servico}\n` +
+    `📅 *Data:* ${formatData(ag.data)}\n` +
+    (ag.obs ? `🎨 *Detalhes:* ${ag.obs}\n` : '') +
+    `💰 *Valor:* ${valor}\n` +
+    `💳 *Pagamento:* ${pagamento}\n` +
+    `━━━━━━━━━━━━━━━━\n\n` +
+    `Qualquer dúvida é só chamar! 😊`;
+  window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function enviarOrcamento(id) {
+  const ag = agendamentos.find(a => a.id == id);
+  if (!ag) return;
+  const tel = ag.telefone.replace(/\D/g,'');
+  const valor = ag.valor ? 'R$ ' + parseFloat(ag.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) : 'A combinar';
+  const pagamento = ag.pagamento || 'A combinar';
+  const msg = `Olá ${ag.nome}! 👋\n\nSegue o orçamento da *Garage Motos Pinturas*:\n\n` +
+    `━━━━━━━━━━━━━━━━\n` +
+    `🏍️ *Moto:* ${ag.moto}${ag.ano?' ('+ag.ano+')':''}\n` +
+    `🔧 *Serviço:* ${ag.servico}\n` +
+    `📅 *Prazo:* ${formatData(ag.data)}\n` +
+    (ag.obs ? `🎨 *Detalhes:* ${ag.obs}\n` : '') +
+    `━━━━━━━━━━━━━━━━\n` +
+    `💰 *Valor Total:* ${valor}\n` +
+    `💳 *Pagamento:* ${pagamento}\n` +
+    `━━━━━━━━━━━━━━━━\n\n` +
+    `Qualquer dúvida é só chamar! 🔥`;
+  window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function enviarRecibo(id) {
+  const ag = agendamentos.find(a => a.id == id);
+  if (!ag) return;
+  const tel = ag.telefone.replace(/\D/g,'');
+  const valor = ag.valor ? 'R$ ' + parseFloat(ag.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) : 'A combinar';
+  const pagamento = ag.pagamento || 'A combinar';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const msg = `✅ *RECIBO DE SERVIÇO*\n*Garage Motos Pinturas*\n\n` +
+    `━━━━━━━━━━━━━━━━\n` +
+    `👤 *Cliente:* ${ag.nome}\n` +
+    `🏍️ *Moto:* ${ag.moto}${ag.ano?' ('+ag.ano+')':''}\n` +
+    `🔧 *Serviço:* ${ag.servico}\n` +
+    (ag.obs ? `🎨 *Detalhes:* ${ag.obs}\n` : '') +
+    `📅 *Data de entrega:* ${formatData(ag.data)}\n` +
+    `━━━━━━━━━━━━━━━━\n` +
+    `💰 *Valor:* ${valor}\n` +
+    `💳 *Pagamento:* ${pagamento}\n` +
+    `📆 *Emitido em:* ${hoje}\n` +
+    `━━━━━━━━━━━━━━━━\n\n` +
+    `Obrigado pela confiança! 🏍️🔥\nVolte sempre!`;
+  window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function enviarWpp(id) {
@@ -836,11 +1303,69 @@ function formatData(str) {
 
 atualizarHeader();
 
+// NOTIFICAÇÕES
+function pedirPermissaoNotificacao() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function dispararNotificacoes() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const hoje = new Date().toISOString().split('T')[0];
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  const amanhaStr = amanha.toISOString().split('T')[0];
+
+  // Agendamentos de HOJE
+  const deHoje = agendamentos.filter(a => a.data === hoje && a.status === 'pendente');
+  deHoje.forEach(ag => {
+    new Notification('🏍️ Garage Motos — Serviço HOJE!', {
+      body: `${ag.nome} • ${ag.servico} • ${ag.moto}`,
+      icon: document.querySelector('link[rel="apple-touch-icon"]')?.href || '',
+      badge: document.querySelector('link[rel="apple-touch-icon"]')?.href || '',
+      tag: 'hoje-' + ag.id,
+    });
+  });
+
+  // Agendamentos de AMANHÃ
+  const deAmanha = agendamentos.filter(a => a.data === amanhaStr && a.status === 'pendente');
+  if (deAmanha.length > 0) {
+    setTimeout(() => {
+      new Notification(`🔔 Garage Motos — ${deAmanha.length} serviço(s) amanhã!`, {
+        body: deAmanha.map(a => `${a.nome} • ${a.servico}`).join('\n'),
+        icon: document.querySelector('link[rel="apple-touch-icon"]')?.href || '',
+        tag: 'amanha-resumo',
+      });
+    }, 1500);
+  }
+
+  // Agendamentos VENCIDOS
+  const vencidos = agendamentos.filter(a => a.data < hoje && a.status === 'pendente');
+  if (vencidos.length > 0) {
+    setTimeout(() => {
+      new Notification(`⚠️ Garage Motos — ${vencidos.length} agendamento(s) vencido(s)!`, {
+        body: vencidos.map(a => `${a.nome} • ${a.servico}`).join('\n'),
+        icon: document.querySelector('link[rel="apple-touch-icon"]')?.href || '',
+        tag: 'vencidos-resumo',
+      });
+    }, 3000);
+  }
+}
+
 window.addEventListener('load', () => {
+  // Pedir permissão ao abrir
+  pedirPermissaoNotificacao();
+
   const amanha = new Date();
   amanha.setDate(amanha.getDate() + 1);
   const qtd = agendamentos.filter(a => a.data === amanha.toISOString().split('T')[0] && a.status === 'pendente').length;
   if (qtd > 0) setTimeout(() => toast(`🔔 ${qtd} cliente(s) para amanhã! Veja Alertas.`, 4000), 1200);
+
+  // Disparar notificações após 2 segundos
+  setTimeout(() => dispararNotificacoes(), 2000);
 });
 </script>
 </body>
