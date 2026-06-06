@@ -473,6 +473,91 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+
+  /* LOGIN */
+  .login-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 24px;
+  }
+  .login-screen.visible { display: flex; }
+  .login-logo-txt {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 46px;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+  .login-logo-txt .red { color: #d91c1c; }
+  .login-logo-txt .white { color: #fff; }
+  .login-sub-txt {
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+  .login-box {
+    background: #111;
+    border: 1.5px solid #252525;
+    border-top: 3px solid #d91c1c;
+    border-radius: 12px;
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .login-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    color: #fff;
+  }
+  .login-desc { font-size: 14px; color: #666; margin-bottom: 24px; line-height: 1.5; }
+  .btn-google {
+    width: 100%;
+    padding: 14px;
+    border: 1.5px solid #333;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: #eee;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .btn-google:active { background: #222; }
+  .login-loading { text-align: center; padding: 12px; color: #666; font-size: 14px; display: none; margin-top: 10px; }
+  .login-loading.visible { display: block; }
+  .btn-logout {
+    background: transparent;
+    border: 1px solid #333;
+    color: #666;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+
   /* CALENDÁRIO */
   .cal-nav {
     display: flex;
@@ -580,82 +665,6 @@
   }
   .cal-ag-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
-  /* LOGIN */
-  .login-screen {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: var(--bg);
-    z-index: 999;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 30px 24px;
-  }
-  .login-screen.visible { display: flex; }
-  .login-logo {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900;
-    font-size: 42px;
-    letter-spacing: 2px;
-    text-align: center;
-    margin-bottom: 6px;
-  }
-  .login-logo .red { color: var(--red); }
-  .login-sub {
-    font-size: 13px;
-    letter-spacing: 3px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 40px;
-  }
-  .login-box {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-top: 3px solid var(--red);
-    border-radius: 12px;
-    padding: 24px 20px;
-    width: 100%;
-    max-width: 360px;
-  }
-  .login-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800;
-    font-size: 22px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
-  }
-  .login-desc { font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
-  .btn-google {
-    width: 100%;
-    padding: 14px;
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface2);
-    color: var(--text);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 17px;
-    letter-spacing: 1px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: all 0.2s;
-  }
-  .btn-google:active { background: #222; }
-  .btn-google img { width: 22px; height: 22px; }
-  .login-loading {
-    text-align: center;
-    padding: 20px;
-    color: var(--muted);
-    font-size: 14px;
-    display: none;
-  }
-  .login-loading.visible { display: block; }
-
   /* DIVIDER */
   .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 </style>
@@ -665,13 +674,13 @@
 
 <!-- TELA DE LOGIN -->
 <div class="login-screen" id="loginScreen">
-  <div class="login-logo"><span class="white">GARAGE</span><span class="red">MOTOS</span></div>
-  <div class="login-sub">Pinturas • Agendamentos</div>
+  <div class="login-logo-txt"><span class="white">GARAGE</span><span class="red">MOTOS</span></div>
+  <div class="login-sub-txt">Pinturas • Agendamentos</div>
   <div class="login-box">
     <div class="login-title">Entrar</div>
     <div class="login-desc">Faça login para acessar seus agendamentos salvos na nuvem em qualquer dispositivo.</div>
     <button class="btn-google" onclick="loginGoogle()">
-      <img src="https://www.google.com/favicon.ico" alt="Google">
+      <img src="https://www.google.com/favicon.ico" width="20" height="20" alt="G">
       ENTRAR COM GOOGLE
     </button>
     <div class="login-loading" id="loginLoading">🔄 Conectando...</div>
@@ -687,7 +696,7 @@
     </div>
   </div>
   <div class="header-badge" id="totalCount">0 AGEND.</div>
-  <button onclick="logout()" style="background:transparent;border:1px solid #333;color:var(--muted);padding:5px 10px;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-size:12px;cursor:pointer;letter-spacing:1px;">SAIR</button>
+  <button class="btn-logout" onclick="logout()">SAIR</button>
 </header>
 
 <div class="tabs">
@@ -867,7 +876,7 @@ async function loginGoogle() {
     options: { redirectTo: window.location.href }
   });
   if (error) {
-    alert('Erro ao entrar: ' + error.message);
+    alert('Erro: ' + error.message);
     document.getElementById('loginLoading').classList.remove('visible');
   }
 }
@@ -878,7 +887,6 @@ async function logout() {
   agendamentos = [];
   document.getElementById('loginScreen').classList.add('visible');
   atualizarHeader();
-  toast('👋 Saiu com sucesso!');
 }
 
 async function carregarNuvem() {
@@ -886,7 +894,7 @@ async function carregarNuvem() {
   const { data, error } = await supa.from('agendamentos').select('*').eq('user_id', usuarioAtual.id);
   if (!error && data) {
     agendamentos = data.map(d => ({ ...d.dados, _dbid: d.id }));
-    salvarLocal();
+    localStorage.setItem(STORE, JSON.stringify(agendamentos));
     atualizarHeader();
   }
 }
@@ -906,7 +914,6 @@ async function excluirNuvem(id) {
   await supa.from('agendamentos').delete().eq('id_local', String(id)).eq('user_id', usuarioAtual.id);
 }
 
-// ESTADO
 const STORE = 'garagemotos_agenda_v2';
 let agendamentos = JSON.parse(localStorage.getItem(STORE) || '[]');
 let filtroAtual = 'todos';
@@ -914,12 +921,8 @@ let modalCallback = null;
 
 document.getElementById('data').min = new Date().toISOString().split('T')[0];
 
-function salvarLocal() {
-  localStorage.setItem(STORE, JSON.stringify(agendamentos));
-}
-
 function salvar() {
-  salvarLocal();
+  localStorage.setItem(STORE, JSON.stringify(agendamentos));
   atualizarHeader();
 }
 
@@ -980,7 +983,6 @@ function salvarAgendamento() {
   const ag = { id: Date.now(), nome, telefone, moto, ano, servico, data, valor, pagamento, obs, status: 'pendente', criado: new Date().toISOString() };
   agendamentos.push(ag);
   salvar();
-  salvarNuvem(ag);
 
   const agId = ag.id;
   alertEl.className = 'alert success';
@@ -1457,35 +1459,7 @@ function formatData(str) {
 
 atualizarHeader();
 
-// AUTH
-supa.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    usuarioAtual = session.user;
-    document.getElementById('loginScreen').classList.remove('visible');
-    await carregarNuvem();
-    dispararNotificacoes();
-  } else {
-    usuarioAtual = null;
-    document.getElementById('loginScreen').classList.add('visible');
-  }
-});
-
-window.addEventListener('load', async () => {
-  const { data: { session } } = await supa.auth.getSession();
-  if (!session) {
-    document.getElementById('loginScreen').classList.add('visible');
-    return;
-  }
-  usuarioAtual = session.user;
-  document.getElementById('loginScreen').classList.remove('visible');
-  await carregarNuvem();
-  pedirPermissaoNotificacao();
-  const amanha = new Date();
-  amanha.setDate(amanha.getDate() + 1);
-  const qtd = agendamentos.filter(a => a.data === amanha.toISOString().split('T')[0] && a.status === 'pendente').length;
-  if (qtd > 0) setTimeout(() => toast(`🔔 ${qtd} cliente(s) para amanhã! Veja Alertas.`, 4000), 1200);
-  setTimeout(() => dispararNotificacoes(), 2000);
-});
+// NOTIFICAÇÕES
 function pedirPermissaoNotificacao() {
   if (!('Notification' in window)) return;
   if (Notification.permission === 'default') {
@@ -1537,7 +1511,36 @@ function dispararNotificacoes() {
   }
 }
 
-// FIM
+// AUTH
+supa.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    usuarioAtual = session.user;
+    document.getElementById('loginScreen').classList.remove('visible');
+    await carregarNuvem();
+  } else {
+    document.getElementById('loginScreen').classList.add('visible');
+  }
+});
+
+window.addEventListener('load', async () => {
+  const { data: { session } } = await supa.auth.getSession();
+  if (!session) {
+    document.getElementById('loginScreen').classList.add('visible');
+    return;
+  }
+  usuarioAtual = session.user;
+  document.getElementById('loginScreen').classList.remove('visible');
+  await carregarNuvem();
+  pedirPermissaoNotificacao();
+
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  const qtd = agendamentos.filter(a => a.data === amanha.toISOString().split('T')[0] && a.status === 'pendente').length;
+  if (qtd > 0) setTimeout(() => toast(`🔔 ${qtd} cliente(s) para amanhã! Veja Alertas.`, 4000), 1200);
+
+  // Disparar notificações após 2 segundos
+  setTimeout(() => dispararNotificacoes(), 2000);
+});
 </script>
 </body>
 </html>
